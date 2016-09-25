@@ -1,1 +1,1 @@
-# edu-different-shading
+# edu-diferred-shading
