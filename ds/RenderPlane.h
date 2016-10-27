@@ -6,12 +6,9 @@ class RenderPlane : public Renderable
 {
 public:
     RenderPlane();
-    ~RenderPlane();
-    virtual void setMatrix(glm::mat4 &);
-    virtual glm::mat4 getMatrix();
-    virtual glm::vec4 diffuseColor();
+    virtual ~RenderPlane();
 
-    void display();
+    void display() const;
 private:
     glm::vec4 color;
     glm::mat4 mx;

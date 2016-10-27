@@ -32,22 +32,7 @@ RenderPlane::~RenderPlane()
     glDeleteBuffers(1, &buffer);
 }
 
-void RenderPlane::setMatrix(glm::mat4 &mx)
-{
-    this->mx = mx;
-}
-
-glm::mat4 RenderPlane::getMatrix()
-{
-    return mx;
-}
-
-glm::vec4 RenderPlane::diffuseColor()
-{
-    return color;
-}
-
-void RenderPlane::display()
+void RenderPlane::display() const
 {
     glBindVertexArray(vao);
     glDrawArrays(GL_TRIANGLES, 0, 6);

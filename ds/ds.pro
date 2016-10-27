@@ -9,7 +9,19 @@ SOURCES += main.cpp \
     Object.cpp \
     Renderable.cpp \
     Triangle.cpp \
-    RenderPlane.cpp
+    RenderPlane.cpp \
+    Logger.cpp \
+    Texture.cpp \
+    VertexShader.cpp \
+    Shader.cpp \
+    Camera.cpp \
+    FragmentShader.cpp \
+    ShaderProgram.cpp \
+    RenderScene.cpp \
+    Material.cpp \
+    ProgramVariable.cpp \
+    ResourceManager.cpp \
+    Light.cpp
 
 DISTFILES += \
     ForwardFragmentShader.glsl \
@@ -27,7 +39,19 @@ HEADERS += \
     Object.h \
     Renderable.h \
     Triangle.h \
-    RenderPlane.h
+    RenderPlane.h \
+    Logger.h \
+    Texture.h \
+    VertexShader.h \
+    Shader.h \
+    Camera.h \
+    FragmentShader.h \
+    ShaderProgram.h \
+    RenderScene.h \
+    Material.h \
+    ProgramVariable.h \
+    ResourceManager.h \
+    Light.h
 
 win32: LIBS += \
     -L"C:/Program Files (x86)/Windows Kits/8.1/Lib/winv6.3/um/x64" -lWinMM -lVersion -lImm32 -lOpenGL32 -lUser32 -lShell32 -lOle32 -lGdi32 -lOleAut32 \
