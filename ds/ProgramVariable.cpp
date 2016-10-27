@@ -86,3 +86,8 @@ void ProgramVariable::setValue(const float value)
 {
     glUniform1f(this->id, value);
 }
+
+bool ProgramVariable::isOk() const
+{
+    return this->id >= 0;
+}

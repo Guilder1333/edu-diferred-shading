@@ -21,7 +21,8 @@ SOURCES += main.cpp \
     Material.cpp \
     ProgramVariable.cpp \
     ResourceManager.cpp \
-    Light.cpp
+    Light.cpp \
+    Window.cpp
 
 DISTFILES += \
     ForwardFragmentShader.glsl \
@@ -51,7 +52,8 @@ HEADERS += \
     Material.h \
     ProgramVariable.h \
     ResourceManager.h \
-    Light.h
+    Light.h \
+    Window.h
 
 win32: LIBS += \
     -L"C:/Program Files (x86)/Windows Kits/8.1/Lib/winv6.3/um/x64" -lWinMM -lVersion -lImm32 -lOpenGL32 -lUser32 -lShell32 -lOle32 -lGdi32 -lOleAut32 \

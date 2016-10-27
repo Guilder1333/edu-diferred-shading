@@ -54,11 +54,21 @@ public:
         }
     }
 
+    virtual bool isOk() const {
+        if (ShaderProgram::isOk()) {
+            return this->projection->isOk() && this->modelView->isOk()
+                    && this->modelMatrix->isOk() && this->shadowMatrix->isOk()
+                    && this->normalMatrix->isOk() && this->texture->isOk()
+                    && this->shadowTexture->isOk() && this->diffuseColor->isOk();
+        }
+        return false;
+    }
+
 protected:
     virtual void link()
     {
         ShaderProgram::link();
-        if (this->isOk())
+        if (ShaderProgram::isOk())
         {
             this->use();
             this->projection = new ProgramVariable(this, "proj", VariableType::MATRIX4);
@@ -106,11 +116,20 @@ public:
         }
     }
 
+    virtual bool isOk() const {
+        if (ShaderProgram::isOk()) {
+            return this->modelViewProjection->isOk() && this->positionTexture->isOk()
+                    && this->normalTexture->isOk() && this->colorTexture->isOk()
+                    && this->lightPosition->isOk();
+        }
+        return false;
+    }
+
 protected:
     virtual void link()
     {
         ShaderProgram::link();
-        if (this->isOk())
+        if (ShaderProgram::isOk())
         {
             this->use();
             this->modelViewProjection = new ProgramVariable(this, "mvp", VariableType::MATRIX4);
@@ -139,11 +158,15 @@ public:
         }
     }
 
+    virtual bool isOk() const {
+        return ShaderProgram::isOk() && this->shadowMatrix->isOk();
+    }
+
 protected:
     virtual void link()
     {
         ShaderProgram::link();
-        if (this->isOk())
+        if (ShaderProgram::isOk())
         {
             this->use();
             this->shadowMatrix = new ProgramVariable(this, "mvp", VariableType::MATRIX4);
@@ -154,7 +177,8 @@ protected:
 RenderScene::RenderScene(const int windowWidth, const int windowHeight)
     : firstPass(nullptr), secondPass(nullptr), shadowPass(nullptr), depthTexture(nullptr),
       windowWidth(windowWidth), windowHeight(windowHeight),
-      renderPlane(nullptr), light(nullptr)
+      renderPlane(nullptr), light(nullptr), colorTexture(nullptr),
+      normalTexture(nullptr), positionTexture(nullptr)
 {
     GLint textureWidth = 2;
     GLint textureHeight = 2;
@@ -270,8 +294,6 @@ bool RenderScene::initialize()
     glBindFragDataLocation(this->firstPass->getId(), 1, "outNormal");
     glBindFragDataLocation(this->firstPass->getId(), 2, "outColor");
 
-    this->firstPass->projection->setValue(glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 1000.f));
-
     this->renderPlane = new RenderPlane();
 
     return true;
@@ -331,6 +353,7 @@ void RenderScene::renderScene()
         0.5, 0.5, 0.5, 1.0);
 
     const glm::mat4& view = this->camera->getMatrix();
+    this->firstPass->projection->setValue(this->camera->getProjection());
 
     for (auto it = this->renderables.cbegin(); it != this->renderables.cend(); it++) {
         const Renderable *m = (Renderable *)*it;
@@ -366,6 +389,9 @@ void RenderScene::renderScene()
                 glm::scale(glm::translate(glm::mat4(), glm::vec3(planeX, planeY, 1.f)), glm::vec3(this->textureWidth/2.f, this->textureHeight/2.f, -1));
 
     this->secondPass->use();
+    this->secondPass->colorTexture->setValue(this->colorTexture);
+    this->secondPass->positionTexture->setValue(this->positionTexture);
+    this->secondPass->normalTexture->setValue(this->normalTexture);
     this->secondPass->lightPosition->setValue(this->light->getPosition());
     this->secondPass->modelViewProjection->setValue(spMvp);
     this->renderPlane->display();

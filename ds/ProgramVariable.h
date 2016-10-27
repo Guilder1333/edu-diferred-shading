@@ -30,6 +30,7 @@ public:
     void setValue(const glm::vec4 &vec);
     void setValue(const int value);
     void setValue(const float value);
+    bool isOk() const;
 private:
     int id;
     VariableType type;

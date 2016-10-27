@@ -10,7 +10,7 @@ public:
     virtual ~ShaderProgram();
     void assign(const VertexShader *shader);
     void assign(const FragmentShader *shader);
-    bool isOk() const;
+    virtual bool isOk() const;
     virtual void use() const;
     unsigned int getId() const;
 protected:
