@@ -1,0 +1,8 @@
+build-ds-Desktop_Qt_5_7_0_MSVC2015_64bit-Debug/debug/*.obj
+build-ds-Desktop_Qt_5_7_0_MSVC2015_64bit-Debug/debug/*.exe
+build-ds-Desktop_Qt_5_7_0_MSVC2015_64bit-Debug/debug/*.exp
+build-ds-Desktop_Qt_5_7_0_MSVC2015_64bit-Debug/debug/*.ilk
+build-ds-Desktop_Qt_5_7_0_MSVC2015_64bit-Debug/debug/*.pdb
+build-ds-Desktop_Qt_5_7_0_MSVC2015_64bit-Debug/debug/*.lib
+build-ds-Desktop_Qt_5_7_0_MSVC2015_64bit-Debug/Makefile*
+build-ds-Desktop_Qt_5_7_0_MSVC2015_64bit-Debug/log.log
