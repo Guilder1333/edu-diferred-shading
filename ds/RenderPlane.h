@@ -8,10 +8,9 @@ public:
     RenderPlane();
     virtual ~RenderPlane();
 
+    void beforeDisplay() const;
     void display() const;
 private:
-    glm::vec4 color;
-    glm::mat4 mx;
     unsigned int buffer;
     unsigned int vao;
 };

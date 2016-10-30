@@ -13,6 +13,7 @@ public:
     virtual bool isOk() const;
     virtual void use() const;
     unsigned int getId() const;
+    static void useProgram(const ShaderProgram *);
 protected:
     virtual void link();
 private:

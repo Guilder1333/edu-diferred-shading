@@ -56,10 +56,10 @@ public:
 
     virtual bool isOk() const {
         if (ShaderProgram::isOk()) {
-            return this->projection->isOk() && this->modelView->isOk()
+            return true; /*this->projection->isOk() && this->modelView->isOk()
                     && this->modelMatrix->isOk() && this->shadowMatrix->isOk()
                     && this->normalMatrix->isOk() && this->texture->isOk()
-                    && this->shadowTexture->isOk() && this->diffuseColor->isOk();
+                    && this->shadowTexture->isOk() && this->diffuseColor->isOk();//*/
         }
         return false;
     }
@@ -118,9 +118,9 @@ public:
 
     virtual bool isOk() const {
         if (ShaderProgram::isOk()) {
-            return this->modelViewProjection->isOk() && this->positionTexture->isOk()
+            return true; /*this->modelViewProjection->isOk() && this->positionTexture->isOk()
                     && this->normalTexture->isOk() && this->colorTexture->isOk()
-                    && this->lightPosition->isOk();
+                    && this->lightPosition->isOk();//*/
         }
         return false;
     }
@@ -244,9 +244,11 @@ bool RenderScene::initialize()
         return false;
     }
 
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
+    ShaderProgram::useProgram(nullptr);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
     GLuint framebuffers[2];
     glGenFramebuffers(2, framebuffers);
 
@@ -254,8 +256,8 @@ bool RenderScene::initialize()
     this->shadowFramebuffer = framebuffers[0];
     this->firstPassBuffer = framebuffers[1];
 
-    glBindFramebuffer(GL_FRAMEBUFFER, shadowFramebuffer);
-    this->depthTexture = new Texture(1024, 1024, GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT, GL_FLOAT);
+    glBindFramebuffer(GL_FRAMEBUFFER, this->shadowFramebuffer);
+    this->depthTexture = new Texture(1024, 1024, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT);
     this->depthTexture->setParameters(GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, this->depthTexture->getId(), 0);
@@ -294,7 +296,15 @@ bool RenderScene::initialize()
     glBindFragDataLocation(this->firstPass->getId(), 1, "outNormal");
     glBindFragDataLocation(this->firstPass->getId(), 2, "outColor");
 
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     this->renderPlane = new RenderPlane();
+
+    const float planeX = (this->textureWidth - this->windowWidth)/2.f;
+    const float planeY = (this->textureHeight - this->windowHeight)/2.f;
+    const glm::mat4& planeProjection = glm::ortho(-this->windowWidth/2.f, this->windowWidth/2.f, -this->windowHeight/2.f, this->windowHeight/2.f, -1.f, 10.f);
+    this->renderPlaneMatrix = planeProjection *
+                glm::scale(glm::translate(glm::mat4(), glm::vec3(planeX, planeY, 1.f)), glm::vec3(this->textureWidth/2.f, this->textureHeight/2.f, -1));
 
     return true;
 }
@@ -335,15 +345,16 @@ void RenderScene::renderScene()
 
     for (auto it = this->renderables.cbegin(); it != this->renderables.cend(); it++) {
         const Renderable *m = (Renderable *)*it;
+        m->beforeDisplay();
         this->shadowPass->shadowMatrix->setValue(shadowViewMatrix * m->getMatrix());
         m->display();
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, this->firstPassBuffer);
-    glViewport(0, 0, this->textureWidth, this->textureHeight);
-    glClearColor(1.0f, 0.1f, 0.5f, 1.0f);
+//    glViewport(0, 0, this->textureWidth, this->textureHeight);
+//    glClearColor(1.0f, 0.1f, 0.5f, 1.0f);
     glViewport(0, 0, this->windowWidth, this->windowHeight);
-    glClearColor(0.0f, 0.1f, 0.5f, 0.0f);
+    glClearColor(0.0f, 0.1f, 0.5f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     const glm::mat4 biasMatrix(
@@ -353,13 +364,15 @@ void RenderScene::renderScene()
         0.5, 0.5, 0.5, 1.0);
 
     const glm::mat4& view = this->camera->getMatrix();
+    this->firstPass->use();
     this->firstPass->projection->setValue(this->camera->getProjection());
+    this->firstPass->shadowTexture->setValue(this->depthTexture);
 
     for (auto it = this->renderables.cbegin(); it != this->renderables.cend(); it++) {
         const Renderable *m = (Renderable *)*it;
+        m->beforeDisplay();
         const glm::mat4& model = m->getMatrix();
         const glm::mat4& modelView = view * model;
-        this->firstPass->use();
         this->firstPass->modelView->setValue(modelView);
         this->firstPass->modelMatrix->setValue(model);
         this->firstPass->shadowMatrix->setValue(biasMatrix * shadowViewMatrix * model);
@@ -371,7 +384,6 @@ void RenderScene::renderScene()
             this->firstPass->texture->setValue(m->getMaterial()->getTexture());
             this->firstPass->diffuseColor->setValue(m->getMaterial()->getDiffuseColor());
         }
-        this->firstPass->shadowTexture->setValue(this->depthTexture);
 
         m->display();
     }
@@ -379,20 +391,15 @@ void RenderScene::renderScene()
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(0, 0, this->windowWidth, this->windowHeight);
 
-    glClearColor(1.0f, 0.1f, 0.5f, 1.0f);
+    glClearColor(0.0f, 0.1f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    const float planeX = (this->textureWidth - this->windowWidth)/2.f;
-    const float planeY = (this->textureHeight - this->windowHeight)/2.f;
-    const glm::mat4 planeProjection = glm::ortho(-this->windowWidth/2.f, this->windowWidth/2.f, -this->windowHeight/2.f, this->windowHeight/2.f, -1.f, 1000.f);
-    const glm::mat4& spMvp = planeProjection *
-                glm::scale(glm::translate(glm::mat4(), glm::vec3(planeX, planeY, 1.f)), glm::vec3(this->textureWidth/2.f, this->textureHeight/2.f, -1));
-
+    this->renderPlane->beforeDisplay();
     this->secondPass->use();
     this->secondPass->colorTexture->setValue(this->colorTexture);
     this->secondPass->positionTexture->setValue(this->positionTexture);
     this->secondPass->normalTexture->setValue(this->normalTexture);
     this->secondPass->lightPosition->setValue(this->light->getPosition());
-    this->secondPass->modelViewProjection->setValue(spMvp);
+    this->secondPass->modelViewProjection->setValue(this->renderPlaneMatrix);
     this->renderPlane->display();
 }

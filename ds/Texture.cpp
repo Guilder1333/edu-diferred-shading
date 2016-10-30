@@ -5,20 +5,13 @@
 Texture::Texture(const std::string &fileName)
     : fileName(fileName), texture(0)
 {
-    //image format
-    FREE_IMAGE_FORMAT fif = FIF_UNKNOWN;
     //pointer to the image, once loaded
     FIBITMAP *dib(0);
-    //pointer to the image data
-    BYTE* bits(0);
-    //image width and height
-    unsigned int width(0), height(0);
     //OpenGL's image ID to map to
-    GLuint gl_texID;
 
     const char *fname = fileName.c_str();
     //check the file signature and deduce its format
-    fif = FreeImage_GetFileType(fname, 0);
+    FREE_IMAGE_FORMAT fif = FreeImage_GetFileType(fname, 0);
     //if still unknown, try to guess the file format from the file extension
     if (fif == FIF_UNKNOWN)
         fif = FreeImage_GetFIFFromFilename(fname);
@@ -34,10 +27,10 @@ Texture::Texture(const std::string &fileName)
         return;
 
     //retrieve the image data
-    bits = FreeImage_GetBits(dib);
+    const BYTE* bits = FreeImage_GetBits(dib);
     //get the image width and height
-    width = FreeImage_GetWidth(dib);
-    height = FreeImage_GetHeight(dib);
+    const GLuint width = FreeImage_GetWidth(dib);
+    const GLuint height = FreeImage_GetHeight(dib);
     //if this somehow one of these failed (they shouldn't), return failure
     if ((bits == 0) || (width == 0) || (height == 0))
         return;
@@ -58,6 +51,7 @@ Texture::Texture(const std::string &fileName)
             return;
     }
 
+    GLuint gl_texID;
     //generate an OpenGL texture ID for this texture
     glGenTextures(1, &gl_texID);
     //bind to the new texture ID
@@ -89,7 +83,7 @@ Texture::~Texture()
 
 void Texture::setParameters(const int magFilter, const int minFilter, const int wrapS, const int wrapT) const
 {
-    glBindTexture(GL_TEXTURE_2D, this->texture);
+    //glBindTexture(GL_TEXTURE_2D, this->texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);

@@ -69,6 +69,11 @@ void Window::run()
         return;
     }
 
+    glEnable(GL_DEPTH_TEST);
+    //glDepthFunc(GL_LESS);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+
     if (!this->initialize()) {
         Logger::log("Failed to initialize scene.");
         this->result = 5;
@@ -111,15 +116,14 @@ bool Window::initialize()
     this->manager = new ResourceManager();
     ResourceManager::setInstnace(this->manager);
     this->object = this->manager->load3dsObject(std::string("Wood.3ds"));
-    this->object->setRotation(-3.14f/2, .0f, .0f);
+    this->object->setRotation(glm::radians(-90.f), .0f, .0f);
     this->sphere = this->manager->load3dsMesh(std::string("sphere.3ds"), std::string("Sphere"));
     this->plane = this->manager->load3dsMesh(std::string("plane.3ds"), std::string("Plane"));
     this->light = this->manager->createLight();
 
     this->camera = new Camera();
-    this->camera->setPerspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 1000.f);
-    this->camera->setPosition(0.f, 0.f, -50.0f);
-    this->camera->setRotation(0.f, glm::radians(-45.f), 0.f);
+    this->camera->setPerspective(glm::radians(45.0f), 4.0f / 3.0f, 1.f, 1000.f);
+    this->camera->setRotation(glm::radians(30.f), glm::radians(-45.f), 0.f);
 
     this->scene->setCamera(this->camera);
     this->scene->setLight(this->light);
@@ -129,7 +133,10 @@ bool Window::initialize()
 
     this->camX = 0;
     this->camY = 0;
-    this->camZ = 0;
+    this->camZ = -50.0f;
+    this->lightX = 0;
+    this->lightY = 0;
+    this->lightZ = 0;
     return true;
 }
 
@@ -167,7 +174,27 @@ void Window::update(const float )
         this->camY -= speed;
     }
 
-    this->light->setPosition(-this->camX, this->camY, -this->camZ);
+    if (this->scancodes[SDL_SCANCODE_UP]) {
+        this->lightZ -= speed;
+    }
+    else if (this->scancodes[SDL_SCANCODE_DOWN]) {
+        this->lightZ += speed;
+    }
+    if (this->scancodes[SDL_SCANCODE_RIGHT]) {
+        this->lightX += speed;
+    }
+    else if (this->scancodes[SDL_SCANCODE_LEFT]) {
+        this->lightX -= speed;
+    }
+    if (this->scancodes[SDL_SCANCODE_PAGEUP]) {
+        this->lightY += speed;
+    } else if (this->scancodes[SDL_SCANCODE_PAGEDOWN]) {
+        this->lightY -= speed;
+    }
+
+    this->light->setPosition(this->lightX, this->lightY, this->lightZ);
+    this->sphere->setPosition(this->lightX, this->lightY, this->lightZ);
+    this->camera->setPosition(this->camX, this->camY, this->camZ);
 }
 
 void Window::render(const float )

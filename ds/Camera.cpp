@@ -23,7 +23,7 @@ void Camera::setOrtho(const float left, const float right, const float bottom, c
     this->projection = glm::ortho(left, right, bottom, top, near, far);
 }
 
-const glm::mat4 &Camera::getProjection() const
+const glm::mat4 Camera::getProjection() const
 {
     return this->projection;
 }

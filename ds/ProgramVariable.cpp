@@ -36,13 +36,13 @@ void ProgramVariable::setValue(const Texture *texture)
         glActiveTexture(GL_TEXTURE0);
         break;
     case VariableType::TEXTURE1:
-        glActiveTexture(GL_TEXTURE1);
+        glActiveTexture(GL_TEXTURE0+1);
         break;
     case VariableType::TEXTURE2:
-        glActiveTexture(GL_TEXTURE2);
+        glActiveTexture(GL_TEXTURE0+2);
         break;
     case VariableType::TEXTURE3:
-        glActiveTexture(GL_TEXTURE3);
+        glActiveTexture(GL_TEXTURE0+3);
         break;
     }
     if (texture == nullptr) {
@@ -52,27 +52,27 @@ void ProgramVariable::setValue(const Texture *texture)
     }
 }
 
-void ProgramVariable::setValue(const glm::mat4 &mat)
+void ProgramVariable::setValue(const glm::mat4 mat)
 {
-    glUniform2fv(this->id, 1, glm::value_ptr(mat));
+    glUniformMatrix4fv(this->id, 1, GL_FALSE, glm::value_ptr(mat));
 }
 
-void ProgramVariable::setValue(const glm::mat3 &mat)
+void ProgramVariable::setValue(const glm::mat3 mat)
 {
-    glUniform2fv(this->id, 1, glm::value_ptr(mat));
+    glUniformMatrix3fv(this->id, 1, GL_FALSE, glm::value_ptr(mat));
 }
 
-void ProgramVariable::setValue(const glm::vec2 &vec)
+void ProgramVariable::setValue(const glm::vec2 vec)
 {
     glUniform2fv(this->id, 1, glm::value_ptr(vec));
 }
 
-void ProgramVariable::setValue(const glm::vec3 &vec)
+void ProgramVariable::setValue(const glm::vec3 vec)
 {
     glUniform3fv(this->id, 1, glm::value_ptr(vec));
 }
 
-void ProgramVariable::setValue(const glm::vec4 &vec)
+void ProgramVariable::setValue(const glm::vec4 vec)
 {
     glUniform4fv(this->id, 1, glm::value_ptr(vec));
 }

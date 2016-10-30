@@ -52,16 +52,25 @@ bool ShaderProgram::isOk() const
 
 void ShaderProgram::use() const
 {
-    static const ShaderProgram *current;
-    if (current != this) {
-        current = this;
-        glUseProgram(this->program);
-    }
+    ShaderProgram::useProgram(this);
 }
 
 unsigned int ShaderProgram::getId() const
 {
     return this->program;
+}
+
+void ShaderProgram::useProgram(const ShaderProgram *program)
+{
+    static const ShaderProgram *current;
+    if (current != program) {
+        current = program;
+        if (program == nullptr) {
+            glUseProgram(0);
+        } else {
+            glUseProgram(program->getId());
+        }
+    }
 }
 
 void ShaderProgram::link()

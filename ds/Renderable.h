@@ -17,6 +17,7 @@ public:
     glm::mat4 getMatrix() const;
 
     virtual void display() const = 0;
+    virtual void beforeDisplay() const;
     void setMaterial(const Material *material);
     const Material *getMaterial() const;
 private:

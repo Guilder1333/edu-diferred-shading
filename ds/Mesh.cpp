@@ -20,14 +20,18 @@ Mesh::Mesh(const GLuint vao, const GLuint buffer, const GLint points, const Rend
 Mesh::~Mesh()
 {
     if (this->buffer != 0) {
-        glDeleteVertexArrays(1, &vao);
-        glDeleteBuffers(1, &buffer);
+        glDeleteVertexArrays(1, &this->vao);
+        glDeleteBuffers(1, &this->buffer);
     }
+}
+
+void Mesh::beforeDisplay() const
+{
+    glBindVertexArray(this->vao);
 }
 
 void Mesh::display() const
 {
-    glBindVertexArray(this->vao);
 	glDrawArrays(GL_TRIANGLES, 0, this->points);
 }
 

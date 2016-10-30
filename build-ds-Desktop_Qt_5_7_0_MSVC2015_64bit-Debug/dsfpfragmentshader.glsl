@@ -21,5 +21,4 @@ void main() {
     outColor = c;
     outNormal = vec4(fragNormal, 1.0f);
     outPosition = vec4(fragPos, gl_FragCoord.z);
-
 }

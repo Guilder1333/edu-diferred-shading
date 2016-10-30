@@ -30,6 +30,9 @@ private:
     float camX;
     float camY;
     float camZ;
+    float lightX;
+    float lightY;
+    float lightZ;
     RenderScene *scene;
     ResourceManager *manager;
     Camera* camera;

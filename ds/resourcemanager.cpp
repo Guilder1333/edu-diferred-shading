@@ -20,13 +20,13 @@ const Lib3dsMaterial *findMaterial(const Lib3dsFile *file, const char *name) {
 
 Mesh *load3dsMesh(const Lib3dsFile *file, const Lib3dsMesh *m, ResourceManager *manager, const Renderable *parent)
 {
-    GLboolean hasTexCoords = m->points == m->texels;
+    const GLboolean hasTexCoords = m->points == m->texels;
     GLint stride = 6;
     if (hasTexCoords) {
         stride += 2;
     }
 
-    GLint points = m->faces * 3;
+    const GLint points = m->faces * 3;
     GLfloat *vertices = new GLfloat[points * stride]; // nine per face.
     GLchar *materialName = nullptr;
     for (GLuint i = 0, k = 0; i < m->faces; i++) {
@@ -67,7 +67,7 @@ Mesh *load3dsMesh(const Lib3dsFile *file, const Lib3dsMesh *m, ResourceManager *
         }
     }
 
-    const Material *material;
+    const Material *material(nullptr);
     if (materialName != nullptr) {
         std::string texture;
         glm::vec4 color;
@@ -103,7 +103,9 @@ Mesh *load3dsMesh(const Lib3dsFile *file, const Lib3dsMesh *m, ResourceManager *
     if (hasTexCoords) {
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride * sizeof(GLfloat), (const void *)(sizeof(GLfloat) * 6));
     }
-    return new Mesh(vao, buffer, points, parent);
+    Mesh *mesh = new Mesh(vao, buffer, points, parent);
+    mesh->setMaterial(material);
+    return mesh;
 }
 
 ResourceManager::~ResourceManager()
@@ -122,7 +124,7 @@ const Material *ResourceManager::loadMaterial(const std::string &texture, const 
     for(auto it = this->materials.cbegin(); it != this->materials.cend(); it++)
     {
         Material *mat = (Material *) *it;
-        if (glm::all(glm::equal(mat->getDiffuseColor(), diffuseColor)) && texture.compare(mat->getTexture()->getFileName()))
+        if (glm::all(glm::equal(mat->getDiffuseColor(), diffuseColor)) && texture.compare(mat->getTexture()->getFileName()) == 0)
         {
             return mat;
         }

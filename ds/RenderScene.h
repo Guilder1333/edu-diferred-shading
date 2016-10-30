@@ -30,6 +30,7 @@ private:
     const Camera *camera;
     const Light *light;
     Renderable *renderPlane;
+    glm::mat4 renderPlaneMatrix;
 
     Texture *depthTexture;
     Texture *colorTexture;

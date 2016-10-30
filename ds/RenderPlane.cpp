@@ -13,27 +13,29 @@ static const GLfloat g_quad_vertex_buffer_data[] = {
 
 RenderPlane::RenderPlane()
 {
-    glGenBuffers(1, &buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glGenBuffers(1, &this->buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, this->buffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(g_quad_vertex_buffer_data), g_quad_vertex_buffer_data, GL_STATIC_DRAW);
 
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
+    glGenVertexArrays(1, &this->vao);
+    glBindVertexArray(this->vao);
     glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, this->buffer);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    this->mx = glm::mat4();
-    this->color = glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
 }
 
 RenderPlane::~RenderPlane()
 {
-    glDeleteVertexArrays(1, &vao);
-    glDeleteBuffers(1, &buffer);
+    glDeleteVertexArrays(1, &this->vao);
+    glDeleteBuffers(1, &this->buffer);
+}
+
+void RenderPlane::beforeDisplay() const
+{
+    glBindVertexArray(this->vao);
 }
 
 void RenderPlane::display() const
 {
-    glBindVertexArray(vao);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
