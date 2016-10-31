@@ -12,19 +12,21 @@ ProgramVariable::ProgramVariable(const ShaderProgram *program, const char *name,
 ProgramVariable::ProgramVariable(const int id, const VariableType type)
     : id(id), type(type)
 {
-    switch(this->type) {
-    case VariableType::TEXTURE:
-        glUniform1d(this->id, 0);
-        break;
-    case VariableType::TEXTURE1:
-        glUniform1d(this->id, 1);
-        break;
-    case VariableType::TEXTURE2:
-        glUniform1d(this->id, 2);
-        break;
-    case VariableType::TEXTURE3:
-        glUniform1d(this->id, 3);
-        break;
+    if (isOk()) {
+        switch(this->type) {
+        case VariableType::TEXTURE:
+            glUniform1d(this->id, 0);
+            break;
+        case VariableType::TEXTURE1:
+            glUniform1d(this->id, 1);
+            break;
+        case VariableType::TEXTURE2:
+            glUniform1d(this->id, 2);
+            break;
+        case VariableType::TEXTURE3:
+            glUniform1d(this->id, 3);
+            break;
+        }
     }
 }
 
@@ -48,7 +50,7 @@ void ProgramVariable::setValue(const Texture *texture)
     if (texture == nullptr) {
         glBindTexture(GL_TEXTURE_2D, 0);
     } else {
-        glBindTexture(GL_TEXTURE_2D, texture->getId());
+        texture->use();
     }
 }
 

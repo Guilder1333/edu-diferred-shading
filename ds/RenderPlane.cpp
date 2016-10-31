@@ -30,12 +30,8 @@ RenderPlane::~RenderPlane()
     glDeleteBuffers(1, &this->buffer);
 }
 
-void RenderPlane::beforeDisplay() const
-{
-    glBindVertexArray(this->vao);
-}
-
 void RenderPlane::display() const
 {
+    glBindVertexArray(this->vao);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }

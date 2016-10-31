@@ -103,6 +103,7 @@ Mesh *load3dsMesh(const Lib3dsFile *file, const Lib3dsMesh *m, ResourceManager *
     if (hasTexCoords) {
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, stride * sizeof(GLfloat), (const void *)(sizeof(GLfloat) * 6));
     }
+    delete[]vertices;
     Mesh *mesh = new Mesh(vao, buffer, points, parent);
     mesh->setMaterial(material);
     return mesh;
@@ -135,6 +136,12 @@ const Material *ResourceManager::loadMaterial(const std::string &texture, const 
         tex = nullptr;
     } else {
         tex = new Texture(texture);
+        tex->setParameters(GL_LINEAR, GL_LINEAR, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+        if (!tex->isOk()) {
+            Material *mat = new Material(nullptr, glm::vec4(1.0f, 0.f, 0.f, 1.f));
+            this->materials.push_back(mat);
+            return mat;
+        }
     }
     Material *mat = new Material(tex, diffuseColor);
     this->materials.push_back(mat);
@@ -156,7 +163,6 @@ Object *ResourceManager::load3dsObject(const std::string &fileName)
         this->objects.push_back(mesh);
     }
 
-    //delete []vertices;
     lib3ds_file_free(file);
 
     this->objects.push_back(object);

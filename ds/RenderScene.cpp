@@ -224,22 +224,22 @@ RenderScene::~RenderScene()
 bool RenderScene::initialize()
 {
     this->firstPass = new FirstPassProgram();
-    this->firstPass->assign(new FragmentShader(std::string("DSFPFragmentShader.glsl")));
     this->firstPass->assign(new VertexShader(std::string("DSFPVertexShader.glsl")));
+    this->firstPass->assign(new FragmentShader(std::string("DSFPFragmentShader.glsl")));
     if (!this->firstPass->isOk()) {
         return false;
     }
 
     this->secondPass = new SecondPassProgram();
-    this->secondPass->assign(new FragmentShader(std::string("DSSPFragmentShader.glsl")));
     this->secondPass->assign(new VertexShader(std::string("DSSPVertexShader.glsl")));
+    this->secondPass->assign(new FragmentShader(std::string("DSSPFragmentShader.glsl")));
     if (!this->secondPass->isOk()) {
         return false;
     }
 
     this->shadowPass = new ShadowPassProgram();
-    this->shadowPass->assign(new FragmentShader(std::string("ShadowFragmentShader.glsl")));
     this->shadowPass->assign(new VertexShader(std::string("ShadowVertexShader.glsl")));
+    this->shadowPass->assign(new FragmentShader(std::string("ShadowFragmentShader.glsl")));
     if (!this->shadowPass->isOk()) {
         return false;
     }
@@ -257,7 +257,7 @@ bool RenderScene::initialize()
     this->firstPassBuffer = framebuffers[1];
 
     glBindFramebuffer(GL_FRAMEBUFFER, this->shadowFramebuffer);
-    this->depthTexture = new Texture(1024, 1024, GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT);
+    this->depthTexture = new Texture(1024, 1024, GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT, GL_FLOAT);
     this->depthTexture->setParameters(GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, this->depthTexture->getId(), 0);
@@ -267,6 +267,8 @@ bool RenderScene::initialize()
         Logger::log(std::string("Failed to create shadow framebuffer."));
         return false;
     }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     // First pass
     glBindFramebuffer(GL_FRAMEBUFFER, this->firstPassBuffer);
@@ -340,21 +342,21 @@ void RenderScene::renderScene()
     this->shadowPass->use();
 
     const float w = 10.0f;
-    const glm::mat4& shadowViewMatrix = glm::ortho(-w, w, -w, w, 0.f, 100.f)
+    const glm::mat4& shadowViewMatrix = glm::ortho(-w, w, -w, w, 0.f, 1000.f)
             * glm::lookAt(this->light->getPosition(), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.0f, 1.0f, 0.0f));
 
     for (auto it = this->renderables.cbegin(); it != this->renderables.cend(); it++) {
         const Renderable *m = (Renderable *)*it;
-        m->beforeDisplay();
         this->shadowPass->shadowMatrix->setValue(shadowViewMatrix * m->getMatrix());
         m->display();
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, this->firstPassBuffer);
-//    glViewport(0, 0, this->textureWidth, this->textureHeight);
-//    glClearColor(1.0f, 0.1f, 0.5f, 1.0f);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, this->textureWidth, this->textureHeight);
+    glClearColor(1.0f, 0.1f, 0.5f, 1.0f);
     glViewport(0, 0, this->windowWidth, this->windowHeight);
-    glClearColor(0.0f, 0.1f, 0.5f, 1.0f);
+    glClearColor(0.0f, 0.1f, 0.5f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     const glm::mat4 biasMatrix(
@@ -366,11 +368,9 @@ void RenderScene::renderScene()
     const glm::mat4& view = this->camera->getMatrix();
     this->firstPass->use();
     this->firstPass->projection->setValue(this->camera->getProjection());
-    this->firstPass->shadowTexture->setValue(this->depthTexture);
 
     for (auto it = this->renderables.cbegin(); it != this->renderables.cend(); it++) {
         const Renderable *m = (Renderable *)*it;
-        m->beforeDisplay();
         const glm::mat4& model = m->getMatrix();
         const glm::mat4& modelView = view * model;
         this->firstPass->modelView->setValue(modelView);
@@ -384,17 +384,18 @@ void RenderScene::renderScene()
             this->firstPass->texture->setValue(m->getMaterial()->getTexture());
             this->firstPass->diffuseColor->setValue(m->getMaterial()->getDiffuseColor());
         }
+        this->firstPass->shadowTexture->setValue(this->depthTexture);
 
         m->display();
     }
 
+    return;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(0, 0, this->windowWidth, this->windowHeight);
 
     glClearColor(0.0f, 0.1f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    this->renderPlane->beforeDisplay();
     this->secondPass->use();
     this->secondPass->colorTexture->setValue(this->colorTexture);
     this->secondPass->positionTexture->setValue(this->positionTexture);

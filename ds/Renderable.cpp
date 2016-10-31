@@ -51,11 +51,6 @@ glm::mat4 Renderable::getMatrix() const
     return this->parent->getMatrix() * mx;
 }
 
-void Renderable::beforeDisplay() const
-{
-
-}
-
 void Renderable::setMaterial(const Material *material)
 {
     this->material = material;

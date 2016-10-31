@@ -70,6 +70,7 @@ void Window::run()
     }
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEBUG_OUTPUT);
     //glDepthFunc(GL_LESS);
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
@@ -135,7 +136,7 @@ bool Window::initialize()
     this->camY = 0;
     this->camZ = -50.0f;
     this->lightX = 0;
-    this->lightY = 0;
+    this->lightY = 5.f;
     this->lightZ = 0;
     return true;
 }

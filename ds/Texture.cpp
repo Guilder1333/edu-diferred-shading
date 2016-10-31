@@ -45,7 +45,7 @@ Texture::Texture(const std::string &fileName)
             break;
         case FIC_RGBALPHA:
            internalFormat = GL_RGBA8;
-           format = GL_RGBA;
+           format = GL_BGRA;
            break;
         default:
             return;
@@ -78,12 +78,14 @@ Texture::Texture(const int width, const int height, const int iternalFormat, con
 
 Texture::~Texture()
 {
-    glDeleteTextures(1, &this->texture);
+    if (this->texture != 0) {
+        glDeleteTextures(1, &this->texture);
+    }
 }
 
 void Texture::setParameters(const int magFilter, const int minFilter, const int wrapS, const int wrapT) const
 {
-    //glBindTexture(GL_TEXTURE_2D, this->texture);
+    glBindTexture(GL_TEXTURE_2D, this->texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, minFilter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);

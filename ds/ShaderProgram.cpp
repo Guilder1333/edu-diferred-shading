@@ -29,6 +29,10 @@ ShaderProgram::~ShaderProgram()
 
 void ShaderProgram::assign(const VertexShader *shader)
 {
+    if (!shader->isOk()) {
+        return;
+    }
+
     glAttachShader(this->program, shader->getShader());
     this->vertexShader = shader;
     if (this->fragmentShader != nullptr) {
@@ -38,6 +42,10 @@ void ShaderProgram::assign(const VertexShader *shader)
 
 void ShaderProgram::assign(const FragmentShader *shader)
 {
+    if (!shader->isOk()) {
+        return;
+    }
+
     glAttachShader(this->program, shader->getShader());
     this->fragmentShader = shader;
     if (this->vertexShader != nullptr) {

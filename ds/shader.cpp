@@ -20,19 +20,19 @@ Shader::Shader(const std::string& fileName, unsigned int shaderType)
     str[length] = 0;
     f.close();
 
-#if QT_DEBUG
+//#if QT_DEBUG
     GLint params;
     // somehow it has better error check
     GLuint program = glCreateShaderProgramv(shaderType, 1, &str);
     glGetProgramiv(program, GL_LINK_STATUS, &params);
     if (params != GL_TRUE) {
         Logger::log(std::string("Failed to link vertex shader program"));
-        Logger::logProgramMessage(program);
+        Logger::logProgram(program);
         glDeleteProgram(program);
         return;
     }
     glDeleteProgram(program);
-#endif
+//#endif
 
     const GLuint shader = glCreateShader(shaderType);
     if (shader != 0) {

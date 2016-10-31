@@ -25,13 +25,9 @@ Mesh::~Mesh()
     }
 }
 
-void Mesh::beforeDisplay() const
-{
-    glBindVertexArray(this->vao);
-}
-
 void Mesh::display() const
 {
+    glBindVertexArray(this->vao);
 	glDrawArrays(GL_TRIANGLES, 0, this->points);
 }
 
