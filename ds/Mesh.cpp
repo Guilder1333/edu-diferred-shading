@@ -28,7 +28,5 @@ Mesh::~Mesh()
 void Mesh::display() const
 {
     glBindVertexArray(this->vao);
-	glDrawArrays(GL_TRIANGLES, 0, this->points);
+    glDrawArrays(GL_TRIANGLES, 0, this->points);
 }
-
-

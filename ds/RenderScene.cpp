@@ -268,19 +268,17 @@ bool RenderScene::initialize()
         return false;
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
     // First pass
     glBindFramebuffer(GL_FRAMEBUFFER, this->firstPassBuffer);
-
-    this->colorTexture = new Texture(this->textureWidth, this->textureHeight, GL_RGBA32F, GL_RGBA, GL_FLOAT);
-    this->colorTexture->setParameters(GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
     this->positionTexture = new Texture(this->textureWidth, this->textureHeight, GL_RGBA32F, GL_RGBA, GL_FLOAT);
     this->positionTexture->setParameters(GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
     this->normalTexture = new Texture(this->textureWidth, this->textureHeight, GL_RGBA32F, GL_RGBA, GL_FLOAT);
     this->normalTexture->setParameters(GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+
+    this->colorTexture = new Texture(this->textureWidth, this->textureHeight, GL_RGBA32F, GL_RGBA, GL_FLOAT);
+    this->colorTexture->setParameters(GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, this->positionTexture->getId(), 0);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, this->normalTexture->getId(), 0);
@@ -306,7 +304,7 @@ bool RenderScene::initialize()
     const float planeY = (this->textureHeight - this->windowHeight)/2.f;
     const glm::mat4& planeProjection = glm::ortho(-this->windowWidth/2.f, this->windowWidth/2.f, -this->windowHeight/2.f, this->windowHeight/2.f, -1.f, 10.f);
     this->renderPlaneMatrix = planeProjection *
-                glm::scale(glm::translate(glm::mat4(), glm::vec3(planeX, planeY, 1.f)), glm::vec3(this->textureWidth/2.f, this->textureHeight/2.f, -1));
+                glm::scale(glm::translate(glm::mat4(), glm::vec3(planeX, planeY, 1.f)), glm::vec3(this->textureWidth/2.f, this->textureHeight/2.f, -1.f));
 
     return true;
 }
@@ -352,7 +350,6 @@ void RenderScene::renderScene()
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, this->firstPassBuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(0, 0, this->textureWidth, this->textureHeight);
     glClearColor(1.0f, 0.1f, 0.5f, 1.0f);
     glViewport(0, 0, this->windowWidth, this->windowHeight);
@@ -360,13 +357,14 @@ void RenderScene::renderScene()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     const glm::mat4 biasMatrix(
-        0.5, 0.0, 0.0, 0.0,
-        0.0, 0.5, 0.0, 0.0,
-        0.0, 0.0, 0.5, 0.0,
-        0.5, 0.5, 0.5, 1.0);
+        0.5f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.5f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.5f, 0.0f,
+        0.5f, 0.5f, 0.5f, 1.0f);
 
     const glm::mat4& view = this->camera->getMatrix();
     this->firstPass->use();
+    this->firstPass->shadowTexture->setValue(this->depthTexture);
     this->firstPass->projection->setValue(this->camera->getProjection());
 
     for (auto it = this->renderables.cbegin(); it != this->renderables.cend(); it++) {
@@ -384,12 +382,10 @@ void RenderScene::renderScene()
             this->firstPass->texture->setValue(m->getMaterial()->getTexture());
             this->firstPass->diffuseColor->setValue(m->getMaterial()->getDiffuseColor());
         }
-        this->firstPass->shadowTexture->setValue(this->depthTexture);
 
         m->display();
     }
 
-    return;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glViewport(0, 0, this->windowWidth, this->windowHeight);
 
@@ -397,9 +393,9 @@ void RenderScene::renderScene()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     this->secondPass->use();
-    this->secondPass->colorTexture->setValue(this->colorTexture);
-    this->secondPass->positionTexture->setValue(this->positionTexture);
+    this->secondPass->positionTexture->setValue(this->colorTexture);
     this->secondPass->normalTexture->setValue(this->normalTexture);
+    this->secondPass->colorTexture->setValue(this->positionTexture);
     this->secondPass->lightPosition->setValue(this->light->getPosition());
     this->secondPass->modelViewProjection->setValue(this->renderPlaneMatrix);
     this->renderPlane->display();

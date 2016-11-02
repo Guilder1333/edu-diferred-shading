@@ -9,16 +9,16 @@ in vec3 fragNormal;
 in vec3 fragPos;
 in vec4 shadowPos;
 
-//out vec4 outPosition;
-//out vec4 outNormal;
+out vec4 outPosition;
+out vec4 outNormal;
 out vec4 outColor;
 
 void main() {
-    vec3 projCoords = shadowPos.xyz;// / shadowPos.w;
+    vec3 projCoords = shadowPos.xyz / shadowPos.w;
     float closestDepth = texture2D(shadowTex, projCoords.xy).r;
     float attenuation = projCoords.z - 0.005f > closestDepth  ? 0.5f : 1.0f;
     vec4 c = (texture2D(tex, fragTexCoord) + color) * attenuation;
-    outColor = vec4(vec3(closestDepth), 1.0f) + c * 0.001;
-    //outNormal = vec4(fragNormal, 1.0f);
-    //outPosition = vec4(fragPos, gl_FragCoord.z);
+    outColor = c;
+    outNormal = vec4(fragNormal, 1.0f);
+    outPosition = vec4(fragPos, gl_FragCoord.z);
 }

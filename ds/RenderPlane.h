@@ -8,7 +8,6 @@ public:
     RenderPlane();
     virtual ~RenderPlane();
 
-    void beforeDisplay() const;
     void display() const;
 private:
     unsigned int buffer;
