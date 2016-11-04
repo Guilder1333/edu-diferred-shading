@@ -9,9 +9,9 @@ in vec3 fragNormal;
 in vec3 fragPos;
 in vec4 shadowPos;
 
-out vec4 outPosition;
-out vec4 outNormal;
-out vec4 outColor;
+layout(location = 0) out vec4 outPosition;
+layout(location = 1) out vec4 outNormal;
+layout(location = 2) out vec4 outColor;
 
 void main() {
     vec3 projCoords = shadowPos.xyz / shadowPos.w;

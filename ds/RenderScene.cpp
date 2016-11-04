@@ -8,16 +8,25 @@
 #include "RenderPlane.h"
 #include "gtc/matrix_transform.hpp"
 
+#define SHADOW_TEXTURE_WIDTH 1024
+#define SHADOW_TEXTURE_HEIGHT 1024
+
+const glm::mat4 biasMatrix(
+    0.5f, 0.0f, 0.0f, 0.0f,
+    0.0f, 0.5f, 0.0f, 0.0f,
+    0.0f, 0.0f, 0.5f, 0.0f,
+    0.5f, 0.5f, 0.5f, 1.0f);
+
 class FirstPassProgram : public ShaderProgram {
 public:
-    ProgramVariable *projection;
-    ProgramVariable *modelView;
-    ProgramVariable *modelMatrix;
-    ProgramVariable *normalMatrix;
-    ProgramVariable *shadowMatrix;
-    ProgramVariable *texture;
-    ProgramVariable *shadowTexture;
-    ProgramVariable *diffuseColor;
+    ProgramVariable<glm::mat4> *projection;
+    ProgramVariable<glm::mat4> *modelView;
+    ProgramVariable<glm::mat4> *modelMatrix;
+    ProgramVariable<glm::mat3> *normalMatrix;
+    ProgramVariable<glm::mat4> *shadowMatrix;
+    ProgramVariable<glm::vec4> *diffuseColor;
+    ProgramVariable<Texture, 0> *texture;
+    ProgramVariable<Texture, 1> *shadowTexture;
     FirstPassProgram()
         : ShaderProgram(), projection(nullptr), modelView(nullptr),
           modelMatrix(nullptr), normalMatrix(nullptr), shadowMatrix(nullptr),
@@ -71,28 +80,29 @@ protected:
         if (ShaderProgram::isOk())
         {
             this->use();
-            this->projection = new ProgramVariable(this, "proj", VariableType::MATRIX4);
-            this->modelView = new ProgramVariable(this, "modelView", VariableType::MATRIX4);
-            this->modelMatrix = new ProgramVariable(this, "modelMatrix", VariableType::MATRIX4);
-            this->shadowMatrix = new ProgramVariable(this, "shadowMvp", VariableType::MATRIX4);
-            this->normalMatrix = new ProgramVariable(this, "normalMatrix", VariableType::MATRIX3);
-            this->texture = new ProgramVariable(this, "tex", VariableType::TEXTURE);
-            this->shadowTexture = new ProgramVariable(this, "shadowTex", VariableType::TEXTURE1);
-            this->diffuseColor = new ProgramVariable(this, "color", VariableType::COLOR);
+            this->projection = new ProgramVariable<glm::mat4>(this, "proj");
+            this->modelView = new ProgramVariable<glm::mat4>(this, "modelView");
+            this->modelMatrix = new ProgramVariable<glm::mat4>(this, "modelMatrix");
+            this->shadowMatrix = new ProgramVariable<glm::mat4>(this, "shadowMvp");
+            this->normalMatrix = new ProgramVariable<glm::mat3>(this, "normalMatrix");
+            this->diffuseColor = new ProgramVariable<glm::vec4>(this, "color");
+            this->texture = new ProgramVariable<Texture, 0>(this, "tex");
+            this->shadowTexture = new ProgramVariable<Texture, 1>(this, "shadowTex");
         }
     }
 };
 
 class SecondPassProgram : public ShaderProgram {
 public:
-    ProgramVariable *modelViewProjection;
-    ProgramVariable *positionTexture;
-    ProgramVariable *normalTexture;
-    ProgramVariable *colorTexture;
-    ProgramVariable *lightPosition;
+    ProgramVariable<glm::mat4> *modelViewProjection;
+    ProgramVariable<glm::mat4> *projection;
+    ProgramVariable<glm::vec3> *lightPosition;
+    ProgramVariable<Texture, 0> *positionTexture;
+    ProgramVariable<Texture, 1> *normalTexture;
+    ProgramVariable<Texture, 2> *colorTexture;
     SecondPassProgram()
         : ShaderProgram(), modelViewProjection(nullptr), positionTexture(nullptr),
-          normalTexture(nullptr), colorTexture(nullptr), lightPosition(nullptr)
+          normalTexture(nullptr), colorTexture(nullptr), lightPosition(nullptr), projection(nullptr)
     {
 
     }
@@ -132,11 +142,12 @@ protected:
         if (ShaderProgram::isOk())
         {
             this->use();
-            this->modelViewProjection = new ProgramVariable(this, "mvp", VariableType::MATRIX4);
-            this->positionTexture = new ProgramVariable(this, "posTex", VariableType::TEXTURE);
-            this->normalTexture = new ProgramVariable(this, "normalTex", VariableType::TEXTURE1);
-            this->colorTexture = new ProgramVariable(this, "colorTex", VariableType::TEXTURE2);
-            this->lightPosition = new ProgramVariable(this, "lightPos", VariableType::VECTOR3);
+            this->modelViewProjection = new ProgramVariable<glm::mat4>(this, "mvp");
+            this->lightPosition = new ProgramVariable<glm::vec3>(this, "lightPos");
+            this->positionTexture = new ProgramVariable<Texture, 0>(this, "posTex");
+            this->normalTexture = new ProgramVariable<Texture, 1>(this, "normalTex");
+            this->colorTexture = new ProgramVariable<Texture, 2>(this, "colorTex");
+            this->projection = new ProgramVariable<glm::mat4>(this, "projection");
         }
     }
 };
@@ -144,7 +155,7 @@ protected:
 class ShadowPassProgram : public ShaderProgram
 {
 public:
-    ProgramVariable *shadowMatrix;
+    ProgramVariable<glm::mat4> *shadowMatrix;
     ShadowPassProgram()
         : ShaderProgram(), shadowMatrix(nullptr)
     {
@@ -169,7 +180,7 @@ protected:
         if (ShaderProgram::isOk())
         {
             this->use();
-            this->shadowMatrix = new ProgramVariable(this, "mvp", VariableType::MATRIX4);
+            this->shadowMatrix = new ProgramVariable<glm::mat4>(this, "mvp");
         }
     }
 };
@@ -178,7 +189,8 @@ RenderScene::RenderScene(const int windowWidth, const int windowHeight)
     : firstPass(nullptr), secondPass(nullptr), shadowPass(nullptr), depthTexture(nullptr),
       windowWidth(windowWidth), windowHeight(windowHeight),
       renderPlane(nullptr), light(nullptr), colorTexture(nullptr),
-      normalTexture(nullptr), positionTexture(nullptr)
+      normalTexture(nullptr), positionTexture(nullptr),
+      firstPassBuffer(nullptr), shadowFramebuffer(nullptr)
 {
     GLint textureWidth = 2;
     GLint textureHeight = 2;
@@ -219,6 +231,12 @@ RenderScene::~RenderScene()
     if (this->normalTexture != nullptr) {
         delete this->normalTexture;
     }
+    if (this->firstPassBuffer != nullptr) {
+        delete this->firstPassBuffer;
+    }
+    if (this->shadowFramebuffer != nullptr) {
+        delete this->shadowFramebuffer;
+    }
 }
 
 bool RenderScene::initialize()
@@ -249,60 +267,34 @@ bool RenderScene::initialize()
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    GLuint framebuffers[2];
-    glGenFramebuffers(2, framebuffers);
-
     // Shadow pass
-    this->shadowFramebuffer = framebuffers[0];
-    this->firstPassBuffer = framebuffers[1];
+    this->shadowFramebuffer = new Framebuffer(SHADOW_TEXTURE_WIDTH, SHADOW_TEXTURE_HEIGHT);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, this->shadowFramebuffer);
-    this->depthTexture = new Texture(1024, 1024, GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT, GL_FLOAT);
-    this->depthTexture->setParameters(GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, this->depthTexture->getId(), 0);
-    glDrawBuffer(GL_NONE);
-
-    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    this->depthTexture = this->shadowFramebuffer->addBuffer(GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT, GL_FLOAT, GL_DEPTH_ATTACHMENT);
+    if (!this->shadowFramebuffer->initialize()) {
         Logger::log(std::string("Failed to create shadow framebuffer."));
         return false;
     }
 
     // First pass
-    glBindFramebuffer(GL_FRAMEBUFFER, this->firstPassBuffer);
+    this->firstPassBuffer = new Framebuffer(this->textureWidth, this->textureHeight);
 
-    this->positionTexture = new Texture(this->textureWidth, this->textureHeight, GL_RGBA32F, GL_RGBA, GL_FLOAT);
-    this->positionTexture->setParameters(GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+    this->positionTexture = this->firstPassBuffer->addBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_COLOR_ATTACHMENT0);
+    this->normalTexture = this->firstPassBuffer->addBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_COLOR_ATTACHMENT1);
+    this->colorTexture = this->firstPassBuffer->addBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_COLOR_ATTACHMENT2);
 
-    this->normalTexture = new Texture(this->textureWidth, this->textureHeight, GL_RGBA32F, GL_RGBA, GL_FLOAT);
-    this->normalTexture->setParameters(GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-
-    this->colorTexture = new Texture(this->textureWidth, this->textureHeight, GL_RGBA32F, GL_RGBA, GL_FLOAT);
-    this->colorTexture->setParameters(GL_NEAREST, GL_NEAREST, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, this->positionTexture->getId(), 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, this->normalTexture->getId(), 0);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, this->colorTexture->getId(), 0);
-
-    GLenum buffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
-    glDrawBuffers(3, buffers);
-
-    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    if(!this->firstPassBuffer->initialize()) {
         Logger::log(std::string("Failed to create first pass framebuffer."));
         return false;
     }
 
-    glBindFragDataLocation(this->firstPass->getId(), 0, "outPosition");
-    glBindFragDataLocation(this->firstPass->getId(), 1, "outNormal");
-    glBindFragDataLocation(this->firstPass->getId(), 2, "outColor");
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    Framebuffer::bindMain();
 
     this->renderPlane = new RenderPlane();
 
     const float planeX = (this->textureWidth - this->windowWidth)/2.f;
     const float planeY = (this->textureHeight - this->windowHeight)/2.f;
-    const glm::mat4& planeProjection = glm::ortho(-this->windowWidth/2.f, this->windowWidth/2.f, -this->windowHeight/2.f, this->windowHeight/2.f, -1.f, 10.f);
+    const glm::mat4& planeProjection = glm::ortho(-this->windowWidth/2.f, this->windowWidth/2.f, -this->windowHeight/2.f, this->windowHeight/2.f, -1.f, 1.f);
     this->renderPlaneMatrix = planeProjection *
                 glm::scale(glm::translate(glm::mat4(), glm::vec3(planeX, planeY, 1.f)), glm::vec3(this->textureWidth/2.f, this->textureHeight/2.f, -1.f));
 
@@ -334,8 +326,8 @@ void RenderScene::setLight(const Light *light)
 
 void RenderScene::renderScene()
 {
-    glBindFramebuffer(GL_FRAMEBUFFER, this->shadowFramebuffer);
-    glViewport(0, 0, 1024, 1024);
+    this->shadowFramebuffer->bind();
+    glViewport(0, 0, SHADOW_TEXTURE_WIDTH, SHADOW_TEXTURE_HEIGHT);
     glClear(GL_DEPTH_BUFFER_BIT);
     this->shadowPass->use();
 
@@ -349,18 +341,12 @@ void RenderScene::renderScene()
         m->display();
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, this->firstPassBuffer);
+    this->firstPassBuffer->bind();
     glViewport(0, 0, this->textureWidth, this->textureHeight);
     glClearColor(1.0f, 0.1f, 0.5f, 1.0f);
     glViewport(0, 0, this->windowWidth, this->windowHeight);
     glClearColor(0.0f, 0.1f, 0.5f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    const glm::mat4 biasMatrix(
-        0.5f, 0.0f, 0.0f, 0.0f,
-        0.0f, 0.5f, 0.0f, 0.0f,
-        0.0f, 0.0f, 0.5f, 0.0f,
-        0.5f, 0.5f, 0.5f, 1.0f);
 
     const glm::mat4& view = this->camera->getMatrix();
     this->firstPass->use();
@@ -386,16 +372,17 @@ void RenderScene::renderScene()
         m->display();
     }
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    Framebuffer::bindMain();
     glViewport(0, 0, this->windowWidth, this->windowHeight);
 
     glClearColor(0.0f, 0.1f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     this->secondPass->use();
-    this->secondPass->positionTexture->setValue(this->colorTexture);
+    this->secondPass->projection->setValue(glm::inverse(this->camera->getProjection() * this->camera->getMatrix()));
+    this->secondPass->positionTexture->setValue(this->positionTexture);
     this->secondPass->normalTexture->setValue(this->normalTexture);
-    this->secondPass->colorTexture->setValue(this->positionTexture);
+    this->secondPass->colorTexture->setValue(this->colorTexture);
     this->secondPass->lightPosition->setValue(this->light->getPosition());
     this->secondPass->modelViewProjection->setValue(this->renderPlaneMatrix);
     this->renderPlane->display();

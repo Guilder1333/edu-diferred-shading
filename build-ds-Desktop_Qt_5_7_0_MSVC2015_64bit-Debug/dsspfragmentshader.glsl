@@ -1,8 +1,8 @@
 #version 450
 
-uniform sampler2D colorTex;
-uniform sampler2D normalTex;
 uniform sampler2D posTex;
+uniform sampler2D normalTex;
+uniform sampler2D colorTex;
 uniform vec3 lightPos;
 
 in vec2 uv;

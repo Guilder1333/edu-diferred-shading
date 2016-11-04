@@ -7,6 +7,7 @@
 #include "Texture.h"
 #include "Material.h"
 #include "Renderable.h"
+#include "Framebuffer.h"
 #include "gl/glew.h"
 
 class RenderScene
@@ -32,12 +33,12 @@ private:
     Renderable *renderPlane;
     glm::mat4 renderPlaneMatrix;
 
-    Texture *depthTexture;
-    Texture *colorTexture;
-    Texture *positionTexture;
-    Texture *normalTexture;
-    GLuint shadowFramebuffer;
-    GLuint firstPassBuffer;
+    const Texture *depthTexture;
+    const Texture *colorTexture;
+    const Texture *positionTexture;
+    const Texture *normalTexture;
+    Framebuffer *shadowFramebuffer;
+    Framebuffer *firstPassBuffer;
     GLint windowWidth;
     GLint windowHeight;
     GLint textureWidth;
