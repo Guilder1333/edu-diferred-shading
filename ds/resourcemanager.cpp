@@ -71,14 +71,14 @@ Mesh *load3dsMesh(const Lib3dsFile *file, const Lib3dsMesh *m, ResourceManager *
     if (materialName != nullptr) {
         std::string texture;
         glm::vec4 color;
+        const Lib3dsMaterial *mat = findMaterial(file, materialName);
         if (hasTexCoords)
         {
-            texture = std::string("WoodTexture.png");
-            color = glm::vec4(.0f, .0f, .0f, .0f);
+            texture = std::string(mat->texture1_map.name);
+            color = glm::make_vec4(mat->diffuse);
         }
         else
         {
-            const Lib3dsMaterial *mat = findMaterial(file, materialName);
             color = glm::make_vec4(mat->diffuse);
             texture = std::string();
         }
@@ -125,7 +125,9 @@ const Material *ResourceManager::loadMaterial(const std::string &texture, const 
     for(auto it = this->materials.cbegin(); it != this->materials.cend(); it++)
     {
         Material *mat = (Material *) *it;
-        if (glm::all(glm::equal(mat->getDiffuseColor(), diffuseColor)) && texture.compare(mat->getTexture()->getFileName()) == 0)
+        if (glm::all(glm::equal(mat->getDiffuseColor(), diffuseColor))
+                && (mat->getTexture() != nullptr)
+                && texture.compare(mat->getTexture()->getFileName()) == 0)
         {
             return mat;
         }

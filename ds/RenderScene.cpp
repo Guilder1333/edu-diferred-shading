@@ -25,12 +25,13 @@ public:
     ProgramVariable<glm::mat3> *normalMatrix;
     ProgramVariable<glm::mat4> *shadowMatrix;
     ProgramVariable<glm::vec4> *diffuseColor;
-    ProgramVariable<Texture, 0> *texture;
-    ProgramVariable<Texture, 1> *shadowTexture;
+    ProgramVariable<Texture, 0> *texture1;
+    ProgramVariable<Texture, 1> *texture2;
+    ProgramVariable<Texture, 2> *shadowTexture;
     FirstPassProgram()
         : ShaderProgram(), projection(nullptr), modelView(nullptr),
           modelMatrix(nullptr), normalMatrix(nullptr), shadowMatrix(nullptr),
-          texture(nullptr), diffuseColor(nullptr)
+          texture1(nullptr), texture2(nullptr), diffuseColor(nullptr)
     {
 
     }
@@ -52,8 +53,11 @@ public:
         if (this->normalMatrix != nullptr) {
             delete this->normalMatrix;
         }
-        if (this->texture != nullptr) {
-            delete this->texture;
+        if (this->texture1 != nullptr) {
+            delete this->texture1;
+        }
+        if (this->texture2 != nullptr) {
+            delete this->texture2;
         }
         if (this->shadowTexture != nullptr) {
             delete this->shadowTexture;
@@ -86,8 +90,9 @@ protected:
             this->shadowMatrix = new ProgramVariable<glm::mat4>(this, "shadowMvp");
             this->normalMatrix = new ProgramVariable<glm::mat3>(this, "normalMatrix");
             this->diffuseColor = new ProgramVariable<glm::vec4>(this, "color");
-            this->texture = new ProgramVariable<Texture, 0>(this, "tex");
-            this->shadowTexture = new ProgramVariable<Texture, 1>(this, "shadowTex");
+            this->texture1 = new ProgramVariable<Texture, 0>(this, "texture1");
+            this->texture2 = new ProgramVariable<Texture, 1>(this, "texture2");
+            this->shadowTexture = new ProgramVariable<Texture, 2>(this, "shadowTex");
         }
     }
 };
@@ -185,24 +190,24 @@ protected:
     }
 };
 
+GLint textureSize(GLint size)
+{
+    GLint textureSize = 2;
+    while (textureSize < size) {
+        textureSize *= 2;
+    }
+    return textureSize;
+}
+
 RenderScene::RenderScene(const int windowWidth, const int windowHeight)
     : firstPass(nullptr), secondPass(nullptr), shadowPass(nullptr), depthTexture(nullptr),
       windowWidth(windowWidth), windowHeight(windowHeight),
+      textureWidth(textureSize(windowWidth)), textureHeight(textureSize(windowHeight)),
       renderPlane(nullptr), light(nullptr), colorTexture(nullptr),
       normalTexture(nullptr), positionTexture(nullptr),
       firstPassBuffer(nullptr), shadowFramebuffer(nullptr)
 {
-    GLint textureWidth = 2;
-    GLint textureHeight = 2;
-    while (textureWidth < windowWidth) {
-        textureWidth *= 2;
-    }
 
-    while (textureHeight < windowHeight) {
-        textureHeight *= 2;
-    }
-    this->textureWidth = textureWidth;
-    this->textureHeight = textureHeight;
 }
 
 RenderScene::~RenderScene()
@@ -219,18 +224,6 @@ RenderScene::~RenderScene()
     if (this->renderPlane != nullptr) {
         delete this->renderPlane;
     }
-    if (this->depthTexture != nullptr) {
-        delete this->depthTexture;
-    }
-    if (this->colorTexture != nullptr) {
-        delete this->colorTexture;
-    }
-    if (this->positionTexture != nullptr) {
-        delete this->positionTexture;
-    }
-    if (this->normalTexture != nullptr) {
-        delete this->normalTexture;
-    }
     if (this->firstPassBuffer != nullptr) {
         delete this->firstPassBuffer;
     }
@@ -241,6 +234,11 @@ RenderScene::~RenderScene()
 
 bool RenderScene::initialize()
 {
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glCullFace(GL_BACK);
+
     this->firstPass = new FirstPassProgram();
     this->firstPass->assign(new VertexShader(std::string("DSFPVertexShader.glsl")));
     this->firstPass->assign(new FragmentShader(std::string("DSFPFragmentShader.glsl")));
@@ -264,29 +262,33 @@ bool RenderScene::initialize()
 
     ShaderProgram::useProgram(nullptr);
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
     // Shadow pass
-    this->shadowFramebuffer = new Framebuffer(SHADOW_TEXTURE_WIDTH, SHADOW_TEXTURE_HEIGHT);
+    Framebuffer *shadowFramebuffer = new Framebuffer(SHADOW_TEXTURE_WIDTH, SHADOW_TEXTURE_HEIGHT);
 
-    this->depthTexture = this->shadowFramebuffer->addBuffer(GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT, GL_FLOAT, GL_DEPTH_ATTACHMENT);
-    if (!this->shadowFramebuffer->initialize()) {
+    this->depthTexture = shadowFramebuffer->addBuffer(GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT, GL_DEPTH_ATTACHMENT);
+    if (!shadowFramebuffer->initialize()) {
         Logger::log(std::string("Failed to create shadow framebuffer."));
+        delete shadowFramebuffer;
         return false;
     }
+
+    this->shadowFramebuffer = shadowFramebuffer;
 
     // First pass
-    this->firstPassBuffer = new Framebuffer(this->textureWidth, this->textureHeight);
+    Framebuffer *firstPassBuffer = new Framebuffer(this->textureWidth, this->textureHeight);
 
-    this->positionTexture = this->firstPassBuffer->addBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_COLOR_ATTACHMENT0);
-    this->normalTexture = this->firstPassBuffer->addBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_COLOR_ATTACHMENT1);
-    this->colorTexture = this->firstPassBuffer->addBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_COLOR_ATTACHMENT2);
+    this->positionTexture = firstPassBuffer->addBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_COLOR_ATTACHMENT0);
+    this->normalTexture = firstPassBuffer->addBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_COLOR_ATTACHMENT1);
+    this->colorTexture = firstPassBuffer->addBuffer(GL_RGBA32F, GL_RGBA, GL_FLOAT, GL_COLOR_ATTACHMENT2);
+    firstPassBuffer->addBuffer(GL_DEPTH_COMPONENT24, GL_DEPTH_ATTACHMENT);
 
-    if(!this->firstPassBuffer->initialize()) {
+    if(!firstPassBuffer->initialize()) {
         Logger::log(std::string("Failed to create first pass framebuffer."));
+        delete firstPassBuffer;
         return false;
     }
+
+    this->firstPassBuffer = firstPassBuffer;
 
     Framebuffer::bindMain();
 
@@ -296,7 +298,7 @@ bool RenderScene::initialize()
     const float planeY = (this->textureHeight - this->windowHeight)/2.f;
     const glm::mat4& planeProjection = glm::ortho(-this->windowWidth/2.f, this->windowWidth/2.f, -this->windowHeight/2.f, this->windowHeight/2.f, -1.f, 1.f);
     this->renderPlaneMatrix = planeProjection *
-                glm::scale(glm::translate(glm::mat4(), glm::vec3(planeX, planeY, 1.f)), glm::vec3(this->textureWidth/2.f, this->textureHeight/2.f, -1.f));
+                glm::scale(glm::translate(glm::mat4(), glm::vec3(planeX, planeY, 0.f)), glm::vec3(this->textureWidth/2.f, this->textureHeight/2.f, -1.f));
 
     return true;
 }
@@ -362,10 +364,12 @@ void RenderScene::renderScene()
         this->firstPass->shadowMatrix->setValue(biasMatrix * shadowViewMatrix * model);
         this->firstPass->normalMatrix->setValue(glm::mat3(glm::transpose(glm::inverse(model))));
         if (m->getMaterial() == nullptr) {
-            this->firstPass->texture->setValue(nullptr);
+            this->firstPass->texture1->setValue(nullptr);
+            this->firstPass->texture2->setValue(nullptr);
             this->firstPass->diffuseColor->setValue(glm::vec4(1.f, 1.f, 1.f, 1.f));
         } else {
-            this->firstPass->texture->setValue(m->getMaterial()->getTexture());
+            this->firstPass->texture1->setValue(m->getMaterial()->getTexture());
+            this->firstPass->texture2->setValue(m->getMaterial()->getTexture());
             this->firstPass->diffuseColor->setValue(m->getMaterial()->getDiffuseColor());
         }
 
@@ -379,7 +383,7 @@ void RenderScene::renderScene()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     this->secondPass->use();
-    this->secondPass->projection->setValue(glm::inverse(this->camera->getProjection() * this->camera->getMatrix()));
+    //this->secondPass->projection->setValue(glm::inverse(this->camera->getProjection() * this->camera->getMatrix()));
     this->secondPass->positionTexture->setValue(this->positionTexture);
     this->secondPass->normalTexture->setValue(this->normalTexture);
     this->secondPass->colorTexture->setValue(this->colorTexture);

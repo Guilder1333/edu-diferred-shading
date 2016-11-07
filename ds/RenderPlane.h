@@ -10,6 +10,6 @@ public:
 
     void display() const;
 private:
-    unsigned int buffer;
-    unsigned int vao;
+    GLuint buffer;
+    GLuint vao;
 };

@@ -1,30 +1,42 @@
 #pragma once
 
+#include "Texture.h"
+#include "ShaderProgram.h"
+
 #include <glm.hpp>
 #include <gtc/type_ptr.hpp>
-#include <Texture.h>
 #include <GL/glew.h>
 
-template<typename T, int TextureIndex = 0>
+template<typename T, GLint TextureIndex = 0>
 class ProgramVariable
 {
 public:
-    ProgramVariable(const class ShaderProgram *program, const char *name) : ProgramVariable(glGetUniformLocation(program->getId(), name)) {
+    ProgramVariable(const ShaderProgram *program, const GLchar *name)
+        : ProgramVariable(glGetUniformLocation(program->getId(), name))
+    {
 
     }
 
-    ProgramVariable(const int id) : id(id) {
+    ProgramVariable(const GLint id)
+        : id(id)
+    {
         if (isOk()) {
             glUniform1i(this->id, TextureIndex);
         }
     }
-    void setValue(const T *value) {
+
+    void setValue(const T *value)
+    {
         this->setValueInternal(value);
     }
-    void setValue(const T &value) {
+
+    void setValue(const T &value)
+    {
         this->setValueInternal(value);
     }
-    bool isOk() const {
+
+    bool isOk() const
+    {
         return this->id >= 0;
     }
 private:
@@ -59,11 +71,11 @@ private:
         glUniform4fv(this->id, 1, vec);
     }
 
-    inline void setValueInternal(const int *value)
+    inline void setValueInternal(const GLint *value)
     {
         glUniform1i(this->id, *value);
     }
-    inline void setValueInternal(const float *value)
+    inline void setValueInternal(const GLfloat *value)
     {
         glUniform1f(this->id, *value);
     }
@@ -93,14 +105,14 @@ private:
     {
         glUniform4fv(this->id, 1, glm::value_ptr(vec));
     }
-    inline void setValueInternal(const int &value)
+    inline void setValueInternal(const GLint &value)
     {
         glUniform1i(this->id, value);
     }
-    inline void setValueInternal(const float &value)
+    inline void setValueInternal(const GLfloat &value)
     {
         glUniform1f(this->id, value);
     }
 
-    int id;
+    GLint id;
 };

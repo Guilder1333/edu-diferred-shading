@@ -1,5 +1,4 @@
 #include "Cube.h"
-#include <GL/glew.h>
 
 static const GLfloat g_vertex_buffer_data[] = {
 	-1.0f,-1.0f,-1.0f, // triangle 1 : begin
@@ -42,26 +41,26 @@ static const GLfloat g_vertex_buffer_data[] = {
 
 Cube::Cube()
 {
-	glGenBuffers(1, &buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glGenBuffers(1, &this->buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, this->buffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
 
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
+    glGenVertexArrays(1, &this->vao);
+    glBindVertexArray(this->vao);
 	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, this->buffer);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
 }
 
 
 Cube::~Cube()
 {
-    glDeleteVertexArrays(1, &vao);
-    glDeleteBuffers(1, &buffer);
+    glDeleteVertexArrays(1, &this->vao);
+    glDeleteBuffers(1, &this->buffer);
 }
 
-void Cube::display()
+void Cube::display() const
 {
-	glBindVertexArray(vao);
+    glBindVertexArray(this->vao);
 	glDrawArrays(GL_TRIANGLES, 0, sizeof(g_vertex_buffer_data) / (sizeof(GLfloat) * 3));
 }

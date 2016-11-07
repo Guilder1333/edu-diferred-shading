@@ -1,9 +1,11 @@
 #pragma once
 
-#include <string>
-#include <glm.hpp>
 #include "Object.h"
 #include "Light.h"
+
+#include <glm.hpp>
+
+#include <string>
 
 class ResourceManager;
 

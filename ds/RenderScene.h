@@ -8,7 +8,8 @@
 #include "Material.h"
 #include "Renderable.h"
 #include "Framebuffer.h"
-#include "gl/glew.h"
+
+#include <GL/glew.h>
 
 class RenderScene
 {
@@ -30,17 +31,17 @@ private:
     class ShadowPassProgram *shadowPass;
     const Camera *camera;
     const Light *light;
-    Renderable *renderPlane;
+    const Renderable *renderPlane;
     glm::mat4 renderPlaneMatrix;
 
     const Texture *depthTexture;
     const Texture *colorTexture;
     const Texture *positionTexture;
     const Texture *normalTexture;
-    Framebuffer *shadowFramebuffer;
-    Framebuffer *firstPassBuffer;
-    GLint windowWidth;
-    GLint windowHeight;
-    GLint textureWidth;
-    GLint textureHeight;
+    const Framebuffer *shadowFramebuffer;
+    const Framebuffer *firstPassBuffer;
+    const GLint windowWidth;
+    const GLint windowHeight;
+    const GLint textureWidth;
+    const GLint textureHeight;
 };

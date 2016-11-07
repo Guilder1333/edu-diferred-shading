@@ -1,13 +1,16 @@
 #pragma once
-class Cube
+
+#include "Renderable.h"
+
+class Cube : public Renderable
 {
 public:
 	Cube();
 	~Cube();
 
-	void display();
+    void display() const;
 private:
-	unsigned int buffer;
-	unsigned int vao;
+    GLuint buffer;
+    GLuint vao;
 };
 

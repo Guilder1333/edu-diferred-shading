@@ -1,30 +1,45 @@
 #include "Texture.h"
-#include <GL/glew.h>
+
+#include "Logger.h"
+
 #include <FreeImage.h>
+#include <GL/glew.h>
 
 Texture::Texture(const std::string &fileName)
     : fileName(fileName), texture(0)
 {
+    std::string fileNameWithExt;
+    size_t index = fileName.find_last_of('.');
+    if (index == std::string::npos) {
+        fileNameWithExt = fileName + std::string(".png");
+    } else {
+        fileNameWithExt = fileName;
+    }
+    const char *fname = fileNameWithExt.c_str();
+
     //pointer to the image, once loaded
     FIBITMAP *dib(0);
     //OpenGL's image ID to map to
 
-    const char *fname = fileName.c_str();
     //check the file signature and deduce its format
     FREE_IMAGE_FORMAT fif = FreeImage_GetFileType(fname, 0);
     //if still unknown, try to guess the file format from the file extension
     if (fif == FIF_UNKNOWN)
         fif = FreeImage_GetFIFFromFilename(fname);
     //if still unkown, return failure
-    if (fif == FIF_UNKNOWN)
+    if (fif == FIF_UNKNOWN) {
+        Logger::log(std::string("Failed to get image type from file '") + fileName + std::string("', or file not exists."));
         return;
+    }
 
     //check that the plugin has reading capabilities and load the file
     if (FreeImage_FIFSupportsReading(fif))
         dib = FreeImage_Load(fif, fname);
     //if the image failed to load, return failure
-    if (!dib)
+    if (!dib) {
+        Logger::log(std::string("Failed to load image from file '") + fileName + std::string("'."));
         return;
+    }
 
     //retrieve the image data
     const BYTE* bits = FreeImage_GetBits(dib);
@@ -32,8 +47,10 @@ Texture::Texture(const std::string &fileName)
     const GLuint width = FreeImage_GetWidth(dib);
     const GLuint height = FreeImage_GetHeight(dib);
     //if this somehow one of these failed (they shouldn't), return failure
-    if ((bits == 0) || (width == 0) || (height == 0))
+    if ((bits == 0) || (width == 0) || (height == 0)) {
+        Logger::log(std::string("Failed to load image from file '") + fileName + std::string("'."));
         return;
+    }
 
     const int bpp = FreeImage_GetBPP(dib);
     GLint internalFormat;
@@ -48,6 +65,7 @@ Texture::Texture(const std::string &fileName)
            format = GL_BGRA;
            break;
         default:
+            Logger::log(std::string("Unsupported image color format '") + fileName + std::string("'."));
             return;
     }
 
@@ -66,7 +84,7 @@ Texture::Texture(const std::string &fileName)
     this->texture = gl_texID;
 }
 
-Texture::Texture(const int width, const int height, const int iternalFormat, const int format, const int componentFormat)
+Texture::Texture(const GLsizei width, const GLsizei height, const GLenum iternalFormat, const GLenum format, const GLenum componentFormat)
 {
     GLuint gl_texID;
     glGenTextures(1, &gl_texID);
@@ -83,7 +101,7 @@ Texture::~Texture()
     }
 }
 
-void Texture::setParameters(const int magFilter, const int minFilter, const int wrapS, const int wrapT) const
+void Texture::setParameters(const GLint magFilter, const GLint minFilter, const GLint wrapS, const GLint wrapT)
 {
     glBindTexture(GL_TEXTURE_2D, this->texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magFilter);
@@ -97,7 +115,7 @@ const std::string &Texture::getFileName() const
     return this->fileName;
 }
 
-unsigned int Texture::getId() const
+GLuint Texture::getId() const
 {
     return this->texture;
 }
@@ -107,6 +125,12 @@ void Texture::use() const
     if (this->texture != 0) {
         glBindTexture(GL_TEXTURE_2D, this->texture);
     }
+}
+
+void Texture::unbind(const GLint index)
+{
+    glActiveTexture(index);
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 bool Texture::isOk() const

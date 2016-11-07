@@ -13,6 +13,9 @@ public:
     void setPosition(const GLfloat x, const GLfloat y, const GLfloat z);
     void setPosition(const glm::vec3 &position);
     void setRotation(const GLfloat pitch, const GLfloat yaw, const GLfloat roll);
+    void setScale(const GLfloat x, const GLfloat y, const GLfloat z);
+    void setScale(const GLfloat scale);
+    void setScale(const glm::vec3 &scale);
     const glm::vec3 &getPosition() const;
     glm::mat4 getMatrix() const;
 
@@ -21,6 +24,7 @@ public:
     const Material *getMaterial() const;
 private:
     glm::vec3 position;
+    glm::vec3 scale;
     GLfloat pitch;
     GLfloat yaw;
     GLfloat roll;

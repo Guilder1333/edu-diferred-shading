@@ -1,14 +1,19 @@
 #pragma once
 
-#include <vector>
+#include "RenderBuffer.h"
+#include "Texture.h"
+
 #include <GL/glew.h>
+
+#include <vector>
 
 class Framebuffer
 {
 public:
-    Framebuffer(const int width, const int height);
+    Framebuffer(const GLsizei width, const GLsizei height);
     ~Framebuffer();
-    const class Texture *addBuffer(const int iternalFormat, const int format, const int componentFormat, const GLenum attachment);
+    const Texture *addBuffer(const GLenum internalFormat, const GLenum format, const GLenum componentFormat, const GLenum attachment);
+    const RenderBuffer *addBuffer(const GLenum internalFormat, const GLenum attachment);
     bool initialize();
     void bind() const;
     static void bindMain();
@@ -16,6 +21,6 @@ public:
 private:
     std::vector<struct Buffer> buffers;
     GLuint id;
-    GLint width;
-    GLint height;
+    GLsizei width;
+    GLsizei height;
 };

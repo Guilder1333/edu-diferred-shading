@@ -1,20 +1,24 @@
 #pragma once
+
+#include <GL/glew.h>
+
 #include <string>
 
 class Texture
 {
 public:
     Texture(const std::string &fileName);
-    Texture(const int width, const int height, const int iternalFormat, const int format, const int componentFormat);
+    Texture(const GLsizei width, const GLsizei height, const GLenum iternalFormat, const GLenum format, const GLenum componentFormat);
     ~Texture();
 
-    void setParameters(const int magFilter, const int minFilter, const int wrapS, const int wrapT) const;
+    void setParameters(const GLint magFilter, const GLint minFilter, const GLint wrapS, const GLint wrapT);
 
     bool isOk() const;
     const std::string &getFileName() const;
-    unsigned int getId() const;
+    GLuint getId() const;
     void use() const;
+    static void unbind(const GLint index);
 private:
-    unsigned int texture;
+    GLuint texture;
     std::string fileName;
 };

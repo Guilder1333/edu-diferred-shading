@@ -13,12 +13,12 @@ Camera::~Camera()
 
 }
 
-void Camera::setPerspective(const float fovy, const float aspect, const float near, const float far)
+void Camera::setPerspective(const GLfloat fovy, const GLfloat aspect, const GLfloat near, const GLfloat far)
 {
     this->projection = glm::perspective(fovy, aspect, near, far);
 }
 
-void Camera::setOrtho(const float left, const float right, const float bottom, const float top, const float near, const float far)
+void Camera::setOrtho(const GLfloat left, const GLfloat right, const GLfloat bottom, const GLfloat top, const GLfloat near, const GLfloat far)
 {
     this->projection = glm::ortho(left, right, bottom, top, near, far);
 }

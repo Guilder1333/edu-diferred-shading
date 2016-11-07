@@ -1,18 +1,20 @@
 #pragma once
 
+#include <GL/glew.h>
+
 #include <string>
 
 class Shader
 {
 public:
     virtual ~Shader();
-    unsigned int getType() const;
-    unsigned int getShader() const;
+    GLuint getType() const;
+    GLuint getShader() const;
     bool isOk() const;
     bool isVertexShader() const;
 protected:
-    Shader(const std::string& fileName, const unsigned int shaderType);
+    Shader(const std::string& fileName, const GLuint shaderType);
 private:
-    unsigned int shader;
-    unsigned int type;
+    GLuint shader;
+    GLuint type;
 };

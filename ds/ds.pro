@@ -22,7 +22,8 @@ SOURCES += main.cpp \
     ResourceManager.cpp \
     Light.cpp \
     Window.cpp \
-    Framebuffer.cpp
+    Framebuffer.cpp \
+    RenderBuffer.cpp
 
 DISTFILES += \
     ForwardFragmentShader.glsl \
@@ -54,7 +55,8 @@ HEADERS += \
     ResourceManager.h \
     Light.h \
     Window.h \
-    Framebuffer.h
+    Framebuffer.h \
+    RenderBuffer.h
 
 win32: LIBS += \
     -L"C:/Program Files (x86)/Windows Kits/8.1/Lib/winv6.3/um/x64" -lWinMM -lVersion -lImm32 -lOpenGL32 -lUser32 -lShell32 -lOle32 -lGdi32 -lOleAut32 \

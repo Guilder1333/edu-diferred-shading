@@ -4,7 +4,7 @@
 #include <GL/glew.h>
 #include <string>
 
-Shader::Shader(const std::string& fileName, unsigned int shaderType)
+Shader::Shader(const std::string& fileName, GLuint shaderType)
     : type(shaderType), shader(0)
 {
     std::ifstream f;
@@ -51,12 +51,12 @@ Shader::~Shader()
     }
 }
 
-unsigned int Shader::getType() const
+GLuint Shader::getType() const
 {
     return this->type;
 }
 
-unsigned int Shader::getShader() const
+GLuint Shader::getShader() const
 {
     return this->shader;
 }
