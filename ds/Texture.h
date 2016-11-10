@@ -8,7 +8,8 @@ class Texture
 {
 public:
     Texture(const std::string &fileName);
-    Texture(const GLsizei width, const GLsizei height, const GLenum iternalFormat, const GLenum format, const GLenum componentFormat);
+    Texture(const GLsizei width, const GLsizei height, const GLenum internalFormat, const GLenum format, const GLenum componentFormat);
+    Texture(const GLsizei width, const GLsizei height, const GLenum internalFormat, const GLenum format, const GLenum componentFormat, const void *data);
     ~Texture();
 
     void setParameters(const GLint magFilter, const GLint minFilter, const GLint wrapS, const GLint wrapT);

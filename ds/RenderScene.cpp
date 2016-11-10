@@ -6,7 +6,9 @@
 #include "ProgramVariable.h"
 #include "Logger.h"
 #include "RenderPlane.h"
-#include "gtc/matrix_transform.hpp"
+#include "Font.h"
+
+#include <gtc/matrix_transform.hpp>
 
 #define SHADOW_TEXTURE_WIDTH 1024
 #define SHADOW_TEXTURE_HEIGHT 1024
@@ -212,6 +214,7 @@ RenderScene::RenderScene(const int windowWidth, const int windowHeight)
 
 RenderScene::~RenderScene()
 {
+    Font::destroy();
     if (this->firstPass != nullptr) {
         delete this->firstPass;
     }
@@ -234,6 +237,8 @@ RenderScene::~RenderScene()
 
 bool RenderScene::initialize()
 {
+    Font::initialize();
+
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glEnable(GL_BLEND);

@@ -84,14 +84,19 @@ Texture::Texture(const std::string &fileName)
     this->texture = gl_texID;
 }
 
-Texture::Texture(const GLsizei width, const GLsizei height, const GLenum iternalFormat, const GLenum format, const GLenum componentFormat)
+Texture::Texture(const GLsizei width, const GLsizei height, const GLenum internalFormat, const GLenum format, const GLenum componentFormat)
+    : Texture(width, height, internalFormat, format, componentFormat, nullptr)
+{
+}
+
+Texture::Texture(const GLsizei width, const GLsizei height, const GLenum internalFormat, const GLenum format, const GLenum componentFormat, const void *data)
 {
     GLuint gl_texID;
     glGenTextures(1, &gl_texID);
     this->texture = gl_texID;
     this->fileName = std::string("generated_") + std::to_string(gl_texID);
     glBindTexture(GL_TEXTURE_2D, this->texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, iternalFormat, width, height, 0, format, componentFormat, 0);
+    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, componentFormat, data);
 }
 
 Texture::~Texture()
