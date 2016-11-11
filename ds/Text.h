@@ -11,4 +11,6 @@ public:
 private:
     std::string &text;
     Font *font;
+    GLuint buffer;
+    GLuint vao;
 };

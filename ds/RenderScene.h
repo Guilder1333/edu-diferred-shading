@@ -8,6 +8,7 @@
 #include "Material.h"
 #include "Renderable.h"
 #include "Framebuffer.h"
+#include "Text.h"
 
 #include <GL/glew.h>
 
@@ -21,11 +22,13 @@ public:
 
     void addRenderObject(const Renderable *);
     void addRenderObject(const Object *);
+    void addText(const Text *);
     void setCamera(const Camera *);
     void setLight(const Light *light);
     void renderScene();
 private:
     std::vector<const Renderable *> renderables;
+    std::vector<const Text *> texts;
     class FirstPassProgram *firstPass;
     class SecondPassProgram *secondPass;
     class ShadowPassProgram *shadowPass;
